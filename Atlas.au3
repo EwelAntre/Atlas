@@ -7,10 +7,13 @@
 
 Global $atlasName
 
+;~ Initializes the Atlas Library, use this at the start to make sure everything works properly
 Func InitializeAtlas($aName)
 	$atlasName = $aName
 EndFunc
 
+#Region Skills
+;~ uses skill and waits until the
 Func UseSkillEx($aSkillSlot,$aTarget, $aCoolDown  = 1000, $aUseCoolDown = False)
 	$tDeadlock = TimerInit()
 	UseSkill($aSkillSlot, $aTarget)
@@ -28,6 +31,24 @@ Func UseSkillEx($aSkillSlot,$aTarget, $aCoolDown  = 1000, $aUseCoolDown = False)
 	PingSleep(400)
 EndFunc
 
+Func WaitForEnergy($aEnergy, $aMaxTime = 60000)
+	local $aTimer = TimerInit()
+	Do
+		PingSleep(100)
+		Until GetEnergy() >= $aEnergy or TimerDiff($aTimer) >= $aMaxTime
+	If GetEnergy() >= $aEnergy Then
+		Return True
+	Else
+		Return False
+	EndIf
+EndFunc
+
+Func GetRechargeLeft($SkillNumber)
+	Return GetSkillbarSkillRecharge($SkillNumber,0)
+EndFunc
+#EndRegion
+
+#Region Travel
 Func WaitForMapLoad($aTargetMapID , $aTravel = False , $aMaxTime = 120000)
 
 	Local $lTimerStart
@@ -83,7 +104,6 @@ Func WaitForTransition($maxTime = 30000)
 
 	EndFunc
 
-
 Func WaitForLoad($aTravel = False , $aMaxTime = 120000)
 
 	Local $lTimerStart
@@ -118,18 +138,9 @@ Func WaitForLoad($aTravel = False , $aMaxTime = 120000)
 
 EndFunc
 
-Func WaitForEnergy($aEnergy, $aMaxTime = 60000)
-	local $aTimer = TimerInit()
-	Do
-		PingSleep(100)
-		Until GetEnergy() >= $aEnergy or TimerDiff($aTimer) >= $aMaxTime
-	If GetEnergy() >= $aEnergy Then
-		Return True
-	Else
-		Return False
-	EndIf
-	EndFunc
+#EndRegion
 
+#Region Miscellaneous
 Func PingSleep($time)
 	Sleep($time + GetPing())
 EndFunc
@@ -139,15 +150,38 @@ Func SendKey($akey)
 	ControlSend($GW_NAME, '', "", $aKey)
 EndFunc
 
-Func GetHealthProc($aAgent)
-	If IsDllStruct($aAgent) = 0 Then $aAgent = GetAgentByID($aAgent)
-	Return DllStructGetData($aAgent,'HP')
-	EndFunc
 
-Func GetRechargeLeft($SkillNumber)
-	return GetSkillbarSkillRecharge($SkillNumber,0)
+Func GetAngle($aX,$aY,$aAgent)
+	$vecx = $aX - DllStructGetData($aAgent,'X')
+	$vecy = $aY - DllStructGetData($aAgent,'Y')
+	$alength = Sqrt($vecx^2+$vecy^2)
+	$aXn = $vecx / $alength
+	if $vecy >= 0 Then
+		Return  -(ASin($aXn) - 3.1415 /2)
+	Else
+		Return (ASin($aXn) - 3.1415 /2)
+	EndIf
 EndFunc
 
+Func _StatusMsg($StringMsg)
+	Local $WinCoords = WinGetPos(GetWindowHandle())
+	If IsArray($WinCoords) Then
+		ToolTip($StringMsg, $WinCoords[0] + 7, $WinCoords[1] + 25)
+	Else
+		ToolTip("")
+	EndIf
+EndFunc   ;==>_StatusMsg
+#EndRegion
+
+#Region Character
+Func GetHealthPercentage($aAgent)
+	If IsDllStruct($aAgent) = 0 Then $aAgent = GetAgentByID($aAgent)
+	Return DllStructGetData($aAgent,'HP')
+EndFunc
+
+#EndRegion
+
+#Region Agents
 Func GetAgentsInRangeByClass($range,$classID)
 	$count = 0
 	$aAgent = GetAgentByID(-2)
@@ -211,6 +245,27 @@ Func GetNumberOfFoesInRange($aRange = 1012)
 	Return False
 EndFunc
 
+Func GetNumberOfFoesInRangeOfAgent($aAgent = -2, $fMaxDistance = 1012)
+	Local $lDistance, $lCount = 0
+
+	If IsDllStruct($aAgent) = 0 Then $aAgent = GetAgentByID($aAgent)
+	For $i = 1 To GetMaxAgents()
+		$lAgentToCompare = GetAgentByID($i)
+		If GetIsDead($lAgentToCompare) <> 0 Then ContinueLoop
+		If DllStructGetData($lAgentToCompare, 'Allegiance') = 0x3 Or DllStructGetData($lAgentToCompare, 'Type') = 0xDB Then
+			$lDistance = GetDistance($lAgentToCompare, $aAgent)
+			If $lDistance < $fMaxDistance Then
+				$lCount += 1
+			EndIf
+		EndIf
+	Next
+
+	Return $lCount
+EndFunc   ;==>GetNumberOfFoesInRangeOfAgent
+#EndRegion
+
+#Region Items and Inventory
+
 Func FindIDSetSlot()
 	Local $lItem
 	Local $lKit = 0
@@ -252,6 +307,28 @@ Func FindFreeChestSpace()
    Next
 EndFunc
 
+
+
+
+Func GoPickUpItem($aAgent)
+	If GetDistance($aAgent) > 150 Then
+		MoveTo(DllStructGetData($aAgent, 'X'), DllStructGetData($aAgent, 'Y'), 100)
+	EndIf
+	PingSleep(10)
+	PickUpItem($aAgent)
+EndFunc
+
+Func salvageMats($aItem,$aDelay = 400)
+   StartSalvage($aItem)
+   Sleep($aDelay+GetPing())
+   If GetRarity($aItem) = 2626 or GetRarity($aItem) = 2624 Then
+;~ 		SendKey('{ENTER}')
+		SalvageMaterials()
+   EndIf
+EndFunc
+#EndRegion
+
+#Region Movement
 Func GoToChest()
 	For $i = 1 To GetMaxAgents()
 		$lAgentName = GetAgentName($i)
@@ -264,27 +341,6 @@ Func GoToChest()
 	Next
 	Return False
 EndFunc
-
-
-Func GoPickUpItem($aAgent)
-	If GetDistance($aAgent) > 150 Then
-		MoveTo(DllStructGetData($aAgent, 'X'), DllStructGetData($aAgent, 'Y'), 100)
-	EndIf
-	PingSleep(10)
-	PickUpItem($aAgent)
-EndFunc
-
-Func GetAngle($aX,$aY,$aAgent)
-	$vecx = $aX - DllStructGetData($aAgent,'X')
-	$vecy = $aY - DllStructGetData($aAgent,'Y')
-	$alength = Sqrt($vecx^2+$vecy^2)
-	$aXn = $vecx / $alength
-	if $vecy >= 0 Then
-		Return  -(ASin($aXn) - 3.1415 /2)
-	Else
-		Return (ASin($aXn) - 3.1415 /2)
-	EndIf
-	EndFunc
 
 Func TurnToPos($aX,$aY, $random = .1)
 	$angle = GetAngle($aX,$aY,GetAgentByID(-2))
@@ -322,7 +378,7 @@ Func TurnFromPos($aX,$aY, $random = .1)
 		Until Abs($rot - $angle ) < $random
 	TurnRight(False)
 	TurnLeft(False)
-	EndFunc
+EndFunc
 
 Func GoBackwardsTo($aX,$aY,$aRandom = 50)
 	Local $lBlocked = 0
@@ -361,45 +417,4 @@ Func GoBackwardsTo($aX,$aY,$aRandom = 50)
 	MoveBackward(False)
 
 EndFunc
-
-;~ ################## Salvage Functions #######################
-
-Func salvageMats($aItem,$aDelay = 400)
-   StartSalvage($aItem)
-   Sleep($aDelay+GetPing())
-   If GetRarity($aItem) = 2626 or GetRarity($aItem) = 2624 Then
-;~ 		SendKey('{ENTER}')
-		SalvageMaterials()
-   EndIf
-EndFunc
-
-;~ ################## Foes Identification Functions #######################
-
-Func GetNumberOfFoesInRangeOfAgent($aAgent = -2, $fMaxDistance = 1012)
-	Local $lDistance, $lCount = 0
-
-	If IsDllStruct($aAgent) = 0 Then $aAgent = GetAgentByID($aAgent)
-	For $i = 1 To GetMaxAgents()
-		$lAgentToCompare = GetAgentByID($i)
-		If GetIsDead($lAgentToCompare) <> 0 Then ContinueLoop
-		If DllStructGetData($lAgentToCompare, 'Allegiance') = 0x3 Or DllStructGetData($lAgentToCompare, 'Type') = 0xDB Then
-			$lDistance = GetDistance($lAgentToCompare, $aAgent)
-			If $lDistance < $fMaxDistance Then
-				$lCount += 1
-			EndIf
-		EndIf
-	Next
-
-	Return $lCount
-EndFunc   ;==>GetNumberOfFoesInRangeOfAgent
-
-;~ ################## Miscellanious Functions #######################
-
-Func _StatusMsg($StringMsg)
-	Local $WinCoords = WinGetPos(GetWindowHandle())
-	If IsArray($WinCoords) Then
-		ToolTip($StringMsg, $WinCoords[0] + 7, $WinCoords[1] + 25)
-	Else
-		ToolTip("")
-	EndIf
-EndFunc   ;==>_StatusMsg
+#EndRegion
