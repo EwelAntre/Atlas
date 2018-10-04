@@ -29,7 +29,7 @@ Func UseSkillEx($aSkillSlot,$aTarget, $aCoolDown  = 1000, $aUseCoolDown = False)
 		Do
 			Sleep(250)
 			If GetIsDead(-2) = 1 Then Return
-		Until TimerDiff($tDeadlock) >= $aUseCoolDown And GetIsCasting(-2) = False
+		Until TimerDiff($tDeadlock) >= $aCoolDown And GetIsCasting(-2) = False
 	EndIF
 	PingSleep(400)
 EndFunc
