@@ -13,7 +13,10 @@ Func InitializeAtlas($aName)
 EndFunc
 
 #Region Skills
-;~ uses skill and waits until the
+; ========================================================================
+; This function uses the skill at $aSkillSlot on $aTarget and waits
+; until it has
+; ========================================================================
 Func UseSkillEx($aSkillSlot,$aTarget, $aCoolDown  = 1000, $aUseCoolDown = False)
 	$tDeadlock = TimerInit()
 	UseSkill($aSkillSlot, $aTarget)
@@ -31,6 +34,10 @@ Func UseSkillEx($aSkillSlot,$aTarget, $aCoolDown  = 1000, $aUseCoolDown = False)
 	PingSleep(400)
 EndFunc
 
+; ========================================================================
+; This function lets the player wait until he $aEnergy or $aMaxTime has
+; gone by
+; ========================================================================
 Func WaitForEnergy($aEnergy, $aMaxTime = 60000)
 	local $aTimer = TimerInit()
 	Do
@@ -43,12 +50,19 @@ Func WaitForEnergy($aEnergy, $aMaxTime = 60000)
 	EndIf
 EndFunc
 
+; ========================================================================
+; This function gets the time left for the skill to be recharched
+; ========================================================================
 Func GetRechargeLeft($SkillNumber)
 	Return GetSkillbarSkillRecharge($SkillNumber,0)
 EndFunc
 #EndRegion
 
 #Region Travel
+; ========================================================================
+; Waits until the map is loaded, use $aTravel if you use travel function
+; $aMaxTime is the maximum time to wait
+; ========================================================================
 Func WaitForMapLoad($aTargetMapID , $aTravel = False , $aMaxTime = 120000)
 
 	Local $lTimerStart
@@ -87,6 +101,9 @@ Func WaitForMapLoad($aTargetMapID , $aTravel = False , $aMaxTime = 120000)
 
 EndFunc
 
+; ========================================================================
+; This function sleeps until the character has moved through the portal
+; ========================================================================
 Func WaitForTransition($maxTime = 30000)
 	Local $lTimerStart = TimerInit()
 
@@ -104,6 +121,9 @@ Func WaitForTransition($maxTime = 30000)
 
 	EndFunc
 
+; ========================================================================
+; This function waits until the map has been loaded
+; ========================================================================
 Func WaitForLoad($aTravel = False , $aMaxTime = 120000)
 
 	Local $lTimerStart
@@ -141,16 +161,25 @@ EndFunc
 #EndRegion
 
 #Region Miscellaneous
+; ========================================================================
+; This function sleeps for the duration of your ping + the time given
+; ========================================================================
 Func PingSleep($time)
 	Sleep($time + GetPing())
 EndFunc
 
+; ========================================================================
+; This function sends a key towards the gw window
+; ========================================================================
 Func SendKey($akey)
 	$GW_NAME = 'Guild Wars - ' & $atlasName
 	ControlSend($GW_NAME, '', "", $aKey)
 EndFunc
 
-
+; ========================================================================
+; This function gets the angel of the given position towards the given
+; agent
+; ========================================================================
 Func GetAngle($aX,$aY,$aAgent)
 	$vecx = $aX - DllStructGetData($aAgent,'X')
 	$vecy = $aY - DllStructGetData($aAgent,'Y')
@@ -163,6 +192,10 @@ Func GetAngle($aX,$aY,$aAgent)
 	EndIf
 EndFunc
 
+; ========================================================================
+; This function shows the message as a tooltip at the top left of the gw
+; window
+; ========================================================================
 Func _StatusMsg($StringMsg)
 	Local $WinCoords = WinGetPos(GetWindowHandle())
 	If IsArray($WinCoords) Then
@@ -174,6 +207,9 @@ EndFunc   ;==>_StatusMsg
 #EndRegion
 
 #Region Character
+; ========================================================================
+; This function gets the health of the agent as a percentage
+; ========================================================================
 Func GetHealthPercentage($aAgent)
 	If IsDllStruct($aAgent) = 0 Then $aAgent = GetAgentByID($aAgent)
 	Return DllStructGetData($aAgent,'HP')
@@ -182,6 +218,9 @@ EndFunc
 #EndRegion
 
 #Region Agents
+; ========================================================================
+; This function gets the agents in range which have the given class
+; ========================================================================
 Func GetAgentsInRangeByClass($range,$classID)
 	$count = 0
 	$aAgent = GetAgentByID(-2)
@@ -198,6 +237,9 @@ Func GetAgentsInRangeByClass($range,$classID)
 	Return $count
 EndFunc
 
+; ========================================================================
+; This function gets the agents in range which have the given weapon type
+; ========================================================================
 Func GetAgentsInRangeByWeaponType($range,$weaponType)
 	$count = 0
 	$aAgent = GetAgentByID(-2)
@@ -214,6 +256,9 @@ Func GetAgentsInRangeByWeaponType($range,$weaponType)
 	Return $count
 EndFunc
 
+; ========================================================================
+; This function gets the number of foes in the given range
+; ========================================================================
 Func GetNumberOfFoesInRange($aRange = 1012)
 	Local $tTarget
 	Local $tID
@@ -245,6 +290,10 @@ Func GetNumberOfFoesInRange($aRange = 1012)
 	Return False
 EndFunc
 
+; ========================================================================
+; This function gets the number of foes in a given range around the given
+; agent
+; ========================================================================
 Func GetNumberOfFoesInRangeOfAgent($aAgent = -2, $fMaxDistance = 1012)
 	Local $lDistance, $lCount = 0
 
@@ -266,6 +315,9 @@ EndFunc   ;==>GetNumberOfFoesInRangeOfAgent
 
 #Region Items and Inventory
 
+; ========================================================================
+; This function finds the slot of the first Id-kit
+; ========================================================================
 Func FindIDSetSlot()
 	Local $lItem
 	Local $lKit = 0
@@ -291,6 +343,9 @@ Func FindIDSetSlot()
 	Return false
 EndFunc
 
+; ========================================================================
+; This function finds the first free chest space
+; ========================================================================
 Func FindFreeChestSpace()
    local $Slot[2] = [1,1]
    For $i = 8 to 16
@@ -307,9 +362,9 @@ Func FindFreeChestSpace()
    Next
 EndFunc
 
-
-
-
+; ========================================================================
+; This function moves to the item and picks it up
+; ========================================================================
 Func GoPickUpItem($aAgent)
 	If GetDistance($aAgent) > 150 Then
 		MoveTo(DllStructGetData($aAgent, 'X'), DllStructGetData($aAgent, 'Y'), 100)
@@ -318,6 +373,10 @@ Func GoPickUpItem($aAgent)
 	PickUpItem($aAgent)
 EndFunc
 
+; ========================================================================
+; This function salvages the material out of the given item with the
+; given delay
+; ========================================================================
 Func salvageMats($aItem,$aDelay = 400)
    StartSalvage($aItem)
    Sleep($aDelay+GetPing())
@@ -329,6 +388,9 @@ EndFunc
 #EndRegion
 
 #Region Movement
+; ========================================================================
+; This function lets the player move to the next chest
+; ========================================================================
 Func GoToChest()
 	For $i = 1 To GetMaxAgents()
 		$lAgentName = GetAgentName($i)
@@ -342,6 +404,10 @@ Func GoToChest()
 	Return False
 EndFunc
 
+; ========================================================================
+; This function lets the player turn towards a position
+; with a random additional angel
+; ========================================================================
 Func TurnToPos($aX,$aY, $random = .1)
 	$angle = GetAngle($aX,$aY,GetAgentByID(-2))
 	$rot = DllStructGetData(GetAgentByID(-2),'Rotation')
@@ -359,6 +425,10 @@ Func TurnToPos($aX,$aY, $random = .1)
 	TurnLeft(False)
 EndFunc
 
+; ========================================================================
+; This function lets the player turn away from a postion
+; with a random additional angel
+; ========================================================================
 Func TurnFromPos($aX,$aY, $random = .1)
 	$angle = GetAngle($aX,$aY,GetAgentByID(-2))
 	if $angle >= 0 Then
@@ -380,6 +450,10 @@ Func TurnFromPos($aX,$aY, $random = .1)
 	TurnLeft(False)
 EndFunc
 
+; ========================================================================
+; This function lets the player move backwards toward a given location
+; with a random additional distance
+; ========================================================================
 Func GoBackwardsTo($aX,$aY,$aRandom = 50)
 	Local $lBlocked = 0
 	Local $lMe
